@@ -1,7 +1,18 @@
-const path = "";
-
 export class LoginPage {
-  navigate() {
-    cy.visit("https://www.saucedemo.com/" + path);
+  elements = {
+    usernameField: "[data-test='username']",
+    passwordField: "[data-test='password']",
+  };
+
+  navigate(path = "") {
+    cy.visit(Cypress.env("SAUCE_BASE_URL") + "/" + path);
+  }
+
+  writeUsername(name) {
+    cy.get(this.elements.usernameField).type(name);
+  }
+
+  writePassword(password) {
+    cy.get(this.elements.passwordField).type(password);
   }
 }
