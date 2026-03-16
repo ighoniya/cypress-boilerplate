@@ -1,11 +1,10 @@
-const { defineConfig } = require("cypress");
+import { defineConfig } from "cypress";
+import setupNodeEvents from "./cypress/plugins/index.js";
 
-module.exports = defineConfig({
-  allowCypressEnv: false,
-
+export default defineConfig({
   e2e: {
-    setupNodeEvents(on, config) {
-      // implement node event listeners here
-    },
+    setupNodeEvents,
+    specPattern: "**/*.feature",
+    stepDefinitions: "cypress/support/step_definitions/**/*.js",
   },
 });
