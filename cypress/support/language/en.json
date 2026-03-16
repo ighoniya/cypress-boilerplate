@@ -1,0 +1,10 @@
+{
+  "saucedemo": {
+    "login_page": {
+      "title": "Swag Labs"
+    },
+    "inventory_page": {
+      "title": "Products"
+    }
+  }
+}
