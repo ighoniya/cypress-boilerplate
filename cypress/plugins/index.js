@@ -38,10 +38,17 @@ export default async function (on, config) {
 
   on(
     "file:preprocessor",
-    createBundler({
-      external: ["@badeball/cypress-cucumber-preprocessor/steps"],
-      plugins: [createEsbuildPlugin(config)],
-    }),
+    (file) => {
+      // Only apply Cucumber preprocessor to .feature files
+      if (file.filePath.endsWith(".feature")) {
+        return createBundler({
+          external: ["@badeball/cypress-cucumber-preprocessor/steps"],
+          plugins: [createEsbuildPlugin(config)],
+        })(file);
+      }
+      // Use default bundler for non-feature files (.js, etc.)
+      return createBundler()(file);
+    },
   );
 
   return config;
