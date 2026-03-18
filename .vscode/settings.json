@@ -1,0 +1,9 @@
+{
+  // Cucumber for VSCode - Official Extension
+  "cucumber.glue": ["cypress/support/step_definitions/**/*.js"],
+  "cucumberautocomplete.steps": ["cypress/support/step_definitions/**/*.js"],
+  "cucumberautocomplete.syncfeatures": "cypress/integration/**/*.feature",
+  "cucumberautocomplete.strictGherkinCompletion": true,
+  "cucumberautocomplete.smartSnippets": true,
+  "cucumberautocomplete.customParameters": []
+}

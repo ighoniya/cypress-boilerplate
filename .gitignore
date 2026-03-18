@@ -1,2 +1,5 @@
 # install local package
 node_modules
+
+# environment files
+cypress/support/environment/.env.*
