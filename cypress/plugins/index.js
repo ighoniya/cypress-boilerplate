@@ -2,7 +2,7 @@ import { addCucumberPreprocessorPlugin } from "@badeball/cypress-cucumber-prepro
 import createEsbuildPlugin from "@badeball/cypress-cucumber-preprocessor/esbuild";
 import createBundler from "@bahmutov/cypress-esbuild-preprocessor";
 import dotenv from "dotenv";
-import { resolve } from "path";
+import path from "path";
 import fs from "fs";
 import mysql from "mysql";
 
@@ -23,7 +23,7 @@ export default async function (on, config) {
 
   if (specifiedEnv) {
     // Try loading from .env.{environment} if specified
-    const envPath = resolve(
+    const envPath = path.resolve(
       process.cwd(),
       `cypress/support/environment/.${specifiedEnv}.env`,
     );
@@ -33,13 +33,13 @@ export default async function (on, config) {
         `Warning: Could not load .env.${specifiedEnv}, falling back to .env`,
       );
       envConfig = dotenv.config({
-        path: resolve(process.cwd(), "cypress/support/environment/.env"),
+        path: path.resolve(process.cwd(), "cypress/support/environment/.env"),
       });
     }
   } else {
     // Load from default .env if no environment specified
     envConfig = dotenv.config({
-      path: resolve(process.cwd(), "cypress/support/environment/.env"),
+      path: path.resolve(process.cwd(), "cypress/support/environment/.env"),
     });
   }
 
@@ -67,7 +67,7 @@ export default async function (on, config) {
   // Add Cypress tasks for sequence fail-fast
   on("task", {
     checkSequenceFile(filePath) {
-      const fullPath = resolve(process.cwd(), filePath);
+      const fullPath = path.resolve(process.cwd(), filePath);
       if (!fs.existsSync(fullPath)) {
         return { hasSequenceTag: false, scenarios: [] };
       }
@@ -112,6 +112,75 @@ export default async function (on, config) {
 
     getSequenceState() {
       return sequenceState;
+    },
+
+    // Execute SQL query (wrapped in Promise for classic mysql callback)
+    dbQuery({ project, dbKey, sql, params = [], environment = "staging" }) {
+      return new Promise((resolve, reject) => {
+        const credentialPath = path.resolve(
+          process.cwd(),
+          `cypress/fixtures/credentials/${environment}/database.json`,
+        );
+
+        if (!fs.existsSync(credentialPath)) {
+          return reject(new Error(`Credential file not found: ${credentialPath}`));
+        }
+
+        const credentials = JSON.parse(fs.readFileSync(credentialPath, "utf8"));
+        const dbConfig = credentials[project]?.[dbKey];
+
+        if (!dbConfig) {
+          return reject(
+            new Error(`Database config not found for ${project}.${dbKey}`),
+          );
+        }
+
+        // Create new connection for each query (as per user requirement)
+        const connection = mysql.createConnection(dbConfig);
+
+        connection.connect((err) => {
+          if (err) {
+            return reject(err);
+          }
+
+          connection.query(sql, params, (error, results, _fields) => {
+            connection.end(); // Always close connection
+            if (error) {
+              return reject(error);
+            }
+            resolve(results);
+          });
+        });
+      });
+    },
+
+    // Test database connection
+    dbTestConnection({ project, dbKey }) {
+      return new Promise((resolve, reject) => {
+        const environment = config.env.environment || "staging";
+        const credentialPath = path.resolve(
+          process.cwd(),
+          `cypress/fixtures/credentials/${environment}/database.json`,
+        );
+        const credentials = JSON.parse(fs.readFileSync(credentialPath, "utf8"));
+        const dbConfig = credentials[project]?.[dbKey];
+
+        if (!dbConfig) {
+          return reject(
+            new Error(`Database config not found for ${project}.${dbKey}`),
+          );
+        }
+
+        const connection = mysql.createConnection(dbConfig);
+
+        connection.connect((err) => {
+          if (err) {
+            return reject(err);
+          }
+          connection.end();
+          resolve({ success: true, message: "Connection successful" });
+        });
+      });
     },
   });
 
