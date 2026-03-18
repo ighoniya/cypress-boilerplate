@@ -23,3 +23,7 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+
+// Setup serial sequence hooks for @sequence fail-fast behavior
+import { setupSerialHooks } from "./helper/make-serial.js";
+setupSerialHooks();
