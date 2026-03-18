@@ -4,17 +4,19 @@ import { saucedemoQueries } from "../../../support/pages/saucedemo/database.quer
 
 describe("Saucedemo Database Connection", () => {
   it("should query user by email", () => {
-    saucedemoQueries.getUserByEmail("xx").then((results) => {
-      cy.log(`User by email: ${JSON.stringify(results, null, 2)}`);
-      expect(results).to.be.an("array");
-      if (results.length > 0) {
-        expect(results[0]).to.have.property("email");
-      }
-    });
+    saucedemoQueries
+      .getUserByEmail("iqbal.ghaniya@paper.id")
+      .then((results) => {
+        cy.log(`User by email: ${JSON.stringify(results, null, 2)}`);
+        expect(results).to.be.an("array");
+        if (results.length > 0) {
+          expect(results[0]).to.have.property("email");
+        }
+      });
   });
 
   it("should query user by similar phone number", () => {
-    saucedemoQueries.getUserBySimiliarPhone("00").then((results) => {
+    saucedemoQueries.getUserBySimiliarPhone("30192552").then((results) => {
       cy.log(`User by similar phone: ${JSON.stringify(results, null, 2)}`);
       expect(results).to.be.an("array");
       if (results.length > 0) {
@@ -25,7 +27,9 @@ describe("Saucedemo Database Connection", () => {
 
   it("should execute custom query", () => {
     saucedemoQueries
-      .execute("SELECT COUNT(*) as total FROM users where email = 'xx'")
+      .execute(
+        "SELECT COUNT(*) as total FROM users where email = 'iqbal.ghaniya@paper.id'",
+      )
       .then((results) => {
         cy.log(`Total users: ${JSON.stringify(results, null, 2)}`);
         expect(results).to.be.an("array");
