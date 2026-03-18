@@ -1,0 +1,3 @@
+{
+  "exclude": ["cypress/e2e/saucedemo/example-exclude/login.feature"]
+}

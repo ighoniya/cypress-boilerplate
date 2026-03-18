@@ -16,6 +16,47 @@ let sequenceState = {
   failedScenarioIndex: -1,
 };
 
+/**
+ * Load exclude patterns from environment-specific exclude directory.
+ * Reads all JSON files in cypress/support/exclude/{environment}/ and merges
+ * their exclude arrays with the base patterns.
+ *
+ * @param {string} environment - The environment name (e.g., 'staging', 'production')
+ * @param {Array<string>} basePatterns - Base exclude patterns from config
+ * @returns {Array<string>} Merged array of exclude patterns
+ */
+function loadExcludePatterns(environment, basePatterns = []) {
+  const excludeDir = path.resolve(
+    process.cwd(),
+    `cypress/support/exclude/${environment}`
+  );
+
+  if (!fs.existsSync(excludeDir)) {
+    console.log(`Exclude directory not found: ${excludeDir}`);
+    return basePatterns;
+  }
+
+  const excludePatterns = [...basePatterns];
+
+  const files = fs.readdirSync(excludeDir);
+  for (const file of files) {
+    if (file.endsWith('.json')) {
+      const filePath = path.join(excludeDir, file);
+      try {
+        const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        if (content.exclude && Array.isArray(content.exclude)) {
+          excludePatterns.push(...content.exclude);
+          console.log(`Loaded ${content.exclude.length} exclude pattern(s) from ${file}`);
+        }
+      } catch (error) {
+        console.warn(`Warning: Failed to parse ${filePath}: ${error.message}`);
+      }
+    }
+  }
+
+  return excludePatterns;
+}
+
 export default async function (on, config) {
   // Load environment variables from .env file
   let envConfig;
@@ -49,6 +90,13 @@ export default async function (on, config) {
   } else {
     console.warn(`Warning: Could not load any .env file`);
   }
+
+  // Load environment-specific exclude patterns and merge with base patterns
+  const environment = config.env.environment || 'staging';
+  config.excludeSpecPattern = loadExcludePatterns(
+    environment,
+    config.excludeSpecPattern
+  );
 
   await addCucumberPreprocessorPlugin(on, config);
 
