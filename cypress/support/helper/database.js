@@ -7,12 +7,12 @@ const getEnvironment = () => {
 
 // Execute a SQL query using database credentials
 export const executeQuery = (project, dbKey, sql, params = []) => {
-  return cy.task('dbQuery', {
+  return cy.task("dbQuery", {
     project,
     dbKey,
     sql,
     params,
-    environment: getEnvironment()
+    environment: getEnvironment(),
   });
 };
 

@@ -1,10 +1,10 @@
 import { addCucumberPreprocessorPlugin } from "@badeball/cypress-cucumber-preprocessor";
 import createEsbuildPlugin from "@badeball/cypress-cucumber-preprocessor/esbuild";
 import createBundler from "@bahmutov/cypress-esbuild-preprocessor";
-import dotenv from "dotenv";
 import path from "path";
 import fs from "fs";
 import mysql from "mysql";
+import { loadYamlConfig } from "../support/helper/env.js";
 
 // Global sequence state in plugin context
 let sequenceState = {
@@ -28,7 +28,7 @@ let sequenceState = {
 function loadExcludePatterns(environment, basePatterns = []) {
   const excludeDir = path.resolve(
     process.cwd(),
-    `cypress/support/exclude/${environment}`
+    `cypress/support/exclude/${environment}`,
   );
 
   if (!fs.existsSync(excludeDir)) {
@@ -40,13 +40,15 @@ function loadExcludePatterns(environment, basePatterns = []) {
 
   const files = fs.readdirSync(excludeDir);
   for (const file of files) {
-    if (file.endsWith('.json')) {
+    if (file.endsWith(".json")) {
       const filePath = path.join(excludeDir, file);
       try {
-        const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        const content = JSON.parse(fs.readFileSync(filePath, "utf8"));
         if (content.exclude && Array.isArray(content.exclude)) {
           excludePatterns.push(...content.exclude);
-          console.log(`Loaded ${content.exclude.length} exclude pattern(s) from ${file}`);
+          console.log(
+            `Loaded ${content.exclude.length} exclude pattern(s) from ${file}`,
+          );
         }
       } catch (error) {
         console.warn(`Warning: Failed to parse ${filePath}: ${error.message}`);
@@ -58,44 +60,28 @@ function loadExcludePatterns(environment, basePatterns = []) {
 }
 
 export default async function (on, config) {
-  // Load environment variables from .env file
-  let envConfig;
-  const specifiedEnv = config.env.environment;
+  // Load environment variables from YAML file using shared function
+  const specifiedEnv = process.env.ENV;
+  let yamlConfig = {};
 
-  if (specifiedEnv) {
-    // Try loading from .env.{environment} if specified
-    const envPath = path.resolve(
-      process.cwd(),
-      `cypress/support/environment/.${specifiedEnv}.env`,
-    );
-    envConfig = dotenv.config({ path: envPath });
-    if (envConfig.error) {
-      console.warn(
-        `Warning: Could not load .env.${specifiedEnv}, falling back to .env`,
-      );
-      envConfig = dotenv.config({
-        path: path.resolve(process.cwd(), "cypress/support/environment/.env"),
-      });
-    }
-  } else {
-    // Load from default .env if no environment specified
-    envConfig = dotenv.config({
-      path: path.resolve(process.cwd(), "cypress/support/environment/.env"),
-    });
+  try {
+    yamlConfig = loadYamlConfig(specifiedEnv);
+  } catch (error) {
+    console.warn(`Warning: Could not load YAML config: ${error.message}`);
   }
 
-  if (!envConfig.error) {
-    // Merge .env variables into config.env
-    config.env = { ...config.env, ...envConfig.parsed };
+  if (Object.keys(yamlConfig).length > 0) {
+    // Merge YAML variables into config.env
+    config.env = { ...config.env, ...yamlConfig };
   } else {
-    console.warn(`Warning: Could not load any .env file`);
+    console.warn(`Warning: Could not load any YAML config file`);
   }
 
   // Load environment-specific exclude patterns and merge with base patterns
-  const environment = config.env.environment || 'staging';
+  const environment = specifiedEnv || "staging";
   config.excludeSpecPattern = loadExcludePatterns(
     environment,
-    config.excludeSpecPattern
+    config.excludeSpecPattern,
   );
 
   await addCucumberPreprocessorPlugin(on, config);
@@ -171,7 +157,9 @@ export default async function (on, config) {
         );
 
         if (!fs.existsSync(credentialPath)) {
-          return reject(new Error(`Credential file not found: ${credentialPath}`));
+          return reject(
+            new Error(`Credential file not found: ${credentialPath}`),
+          );
         }
 
         const credentials = JSON.parse(fs.readFileSync(credentialPath, "utf8"));
@@ -205,7 +193,7 @@ export default async function (on, config) {
     // Test database connection
     dbTestConnection({ project, dbKey }) {
       return new Promise((resolve, reject) => {
-        const environment = config.env.environment || "staging";
+        const environment = process.env.ENV || "staging";
         const credentialPath = path.resolve(
           process.cwd(),
           `cypress/fixtures/credentials/${environment}/database.json`,
