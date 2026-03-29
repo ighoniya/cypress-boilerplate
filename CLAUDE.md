@@ -4,13 +4,9 @@
 
 ## Project Structure
 
-`cypress/integration/{project}/{feature}.feature` - BDD tests
-`cypress/support/pages/{project}/{page}.page.js` - Page objects
-`cypress/support/step_definitions/{project}/{page}.step.js` - Step definitions
-`cypress/support/language/{en,...}.json` - Translations
-`cypress/fixtures/credentials/{env}/{type}.json` - Test data
-`cypress/support/exclude/{env}/` - Environment exclusions
-`cypress/support/helper/` - Helper functions
+`cypress/integration/{project}/{feature}.feature` - BDD | `cypress/support/pages/{project}/{page}.page.js` - Page objects
+`cypress/support/step_definitions/{project}/{page}.step.js` - Steps | `cypress/support/language/{en,...}.json` - Translations
+`cypress/fixtures/credentials/{env}/{type}.json` - Test data | `cypress/support/exclude/{env}/` - Environment exclusions
 
 ---
 
@@ -19,7 +15,7 @@
 **Pattern:** `{project}.{page_name}.{element}` (page uses underscore)
 
 ```json
-{ "saucedemo": { "login_page": { "title": "Swag Labs" } } }
+{ "saucedemo": { "login_page": { "title": "Swag Labs" } }
 ```
 
 **Usage:** `getText('saucedemo', 'login_page', 'title')`
@@ -61,7 +57,7 @@ When("I log in with the {string} account on Saucedemo", (accountKey) => {
 **Structure:** `cypress/fixtures/credentials/{env}/{type}.json`
 
 ```json
-{ "saucedemo": { "main": { "username": "...", "password": "***" } } }
+{ "saucedemo": { "main": { "username": "...", "password": "***" } }
 ```
 
 **Usage:** `getUserCredentials(project, userKey)` → `{ username, password }`
@@ -73,19 +69,13 @@ When("I log in with the {string} account on Saucedemo", (accountKey) => {
 
 `getText(project, page_name, key)` - Get localized text
 `getUserCredentials(project, userKey)` - Get `{ username, password }`
-`loadCredentials(credentialType)` - Load credentials into cache
 `setLanguage(lang)` - Set language
-`stateStore[key] = value` - Share data across sequential scenarios
+`stateStore[key] = value` - Share data across sequential scenarios (use with `@sequence`)
 `executeQuery(project, dbKey, sql, params)` - Execute SQL query
 
 ---
 
-## Test Commands
+## Commands
 
 `npm run cy:open` - UI mode (default) | `npm run cy:open-stag` - Staging | `npm run cy:open-prod` - Production
-
----
-
-## Workflow
-
-`.feature` → `.page.js` → `.step.js` → `npm run cy:open`
+**Workflow:** `.feature` → `.page.js` → `.step.js` → `npm run cy:open`
